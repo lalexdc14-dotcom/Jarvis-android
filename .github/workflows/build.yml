@@ -27,7 +27,8 @@ jobs:
       - name: Install Buildozer and Cython
         run: |
           pip3 install --upgrade pip
-          pip3 install buildozer cython==0.29.36
+          pip3 install cython==0.29.36
+          pip3 install https://github.com/kivy/buildozer/archive/master.zip
 
       - name: Cache buildozer global directory
         uses: actions/cache@v4
