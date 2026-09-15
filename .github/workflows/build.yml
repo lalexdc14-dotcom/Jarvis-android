@@ -16,25 +16,26 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Se añade de forma nativa la configuración de Java 17 recomendada por GitHub
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # Se añaden dependencias necesarias para arquitecturas modernas de Android
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y git zip unzip python3-pip \
             autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev cmake libffi-dev libssl-dev \
-            build-essential ccache
+            build-essential ccache libltdl-dev
 
+      # CORRECCIÓN 1: Se actualiza Cython a la serie 3.0.x (requerida para Python 3.11)
       - name: Install Buildozer and Cython
         run: |
           pip3 install --upgrade pip
-          pip3 install cython==0.29.36
+          pip3 install "cython>=3.0.0,<3.1.0"
           pip3 install https://github.com/kivy/buildozer/archive/master.zip
 
       - name: Cache buildozer global directory
@@ -49,15 +50,16 @@ jobs:
           path: .buildozer
           key: buildozer-local-${{ hashFiles('buildozer.spec') }}
 
-      # CORRECCIÓN: Se eliminó el paso manual de licencias y se fuerza a Buildozer 
-      # a aceptarlas de manera automática mediante una variable de entorno oficial.
-      # También añadimos "yes |" como respaldo definitivo.
+      # CORRECCIÓN 2: Se eliminó "yes |". Usamos el comando nativo de licencias
+      # y ejecutamos en modo "verbose" (-v) para rastrear fallos ocultos.
+      # Se incluye la variable ACCEPT_EULA para herramientas internas del SDK.
       - name: Build with Buildozer
         env:
           BUILDOZER_ALLOW_ORG_BUILD: "1"
-          ANDROID_SDK_HOME: "/home/runner/.android"
+          ACCEPT_EULA: "Y"
         run: |
-          yes | buildozer android debug
+          buildozer android licenses
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
